@@ -1,8 +1,7 @@
 # Base image
-FROM php:7.0-apache
+FROM php:7.0-fpm
 
 RUN echo 'Europe/Warsaw' > /etc/timezone
-RUN a2enmod rewrite
 
 # --- SOFT --- #
 RUN apt-get update 
@@ -72,23 +71,12 @@ RUN apt-get install -y libmemcached-dev \
   && docker-php-ext-configure memcached \
   && docker-php-ext-install memcached
 
-
 # --- COMPOSER --- #
 RUN curl -sS https://getcomposer.org/installer | php
 RUN mv composer.phar /usr/local/bin/composer
 
 # Speed up Composer installations
 RUN composer global require hirak/prestissimo
-
-# Apache2 - Manually set up the apache environment variables
-ENV APACHE_RUN_USER www-data
-ENV APACHE_RUN_GROUP www-data
-ENV APACHE_LOG_DIR /var/log/apache2
-ENV APACHE_LOCK_DIR /var/lock/apache2
-ENV APACHE_PID_FILE /var/run/apache2.pid
-
-# Apache2 mods
-RUN a2enmod rewrite
 
 # Install supervisor (using easy_install to get latest version and not from 2013 using apt-get)
 RUN mkdir /var/log/supervisor/
