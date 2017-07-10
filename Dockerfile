@@ -1,5 +1,6 @@
 # Base image
-FROM php:7.0-fpm
+FROM php:5.6-apache
+MAINTAINER Patryk Trochowski <patryk.trocho@gmail.com>
 
 RUN echo 'Europe/Warsaw' > /etc/timezone
 
@@ -10,6 +11,8 @@ RUN apt-get install -y \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libmcrypt-dev \
+    libz-dev \
+    libxml2-dev \
     libpng12-dev \
     zlib1g-dev \
     libssl-dev \
@@ -40,36 +43,18 @@ RUN docker-php-ext-install -j$(nproc) iconv mcrypt && \
     docker-php-ext-install mbstring
 
 RUN pecl channel-update pecl.php.net && \
-    pecl install redis && \
-    apt-get install -y libssl-dev && pecl install mongodb && \
+    pecl install redis-2.2.8 && \
+    pecl install mongo && \
+    pecl install memcache && \
+    pecl install memcached-2.2.0 && \
     pecl install xdebug && \
     pecl install imagick
 
-RUN echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/ext-mongodb.ini && \
+RUN echo "extension=mongo.so" > /usr/local/etc/php/conf.d/ext-mongo.ini && \
     echo "extension=redis.so" > /usr/local/etc/php/conf.d/ext-redis.ini && \
+    echo "extension=memcached.so" > /usr/local/etc/php/conf.d/ext-memcached.ini && \
     echo "extension=imagick.so" > /usr/local/etc/php/conf.d/ext-imagick.ini && \
     echo "zend_extension=xdebug.so" > /usr/local/etc/php/conf.d/ext-xdebug.ini
-
-# Install memcache extension
-RUN set -x \
-    && apt-get update && apt-get install -y --no-install-recommends unzip libpcre3 libpcre3-dev \
-    && cd /tmp \
-    && curl -sSL -o php7.zip https://github.com/websupport-sk/pecl-memcache/archive/php7.zip \
-    && unzip php7 \
-    && cd pecl-memcache-php7 \
-    && /usr/local/bin/phpize \
-    && ./configure --with-php-config=/usr/local/bin/php-config \
-    && make \
-    && make install \
-    && echo "extension=memcache.so" > /usr/local/etc/php/conf.d/ext-memcache.ini \
-    && rm -rf /tmp/pecl-memcache-php7 php7.zip
-
-# Install memcached
-RUN apt-get install -y libmemcached-dev \
-  && git clone https://github.com/php-memcached-dev/php-memcached /usr/src/php/ext/memcached \
-  && cd /usr/src/php/ext/memcached && git checkout -b php7 origin/php7 \
-  && docker-php-ext-configure memcached \
-  && docker-php-ext-install memcached
 
 # --- COMPOSER --- #
 RUN curl -sS https://getcomposer.org/installer | php
@@ -77,6 +62,16 @@ RUN mv composer.phar /usr/local/bin/composer
 
 # Speed up Composer installations
 RUN composer global require hirak/prestissimo
+
+# Apache2 - Manually set up the apache environment variables
+ENV APACHE_RUN_USER www-data
+ENV APACHE_RUN_GROUP www-data
+ENV APACHE_LOG_DIR /var/log/apache2
+ENV APACHE_LOCK_DIR /var/lock/apache2
+ENV APACHE_PID_FILE /var/run/apache2.pid
+
+# Apache2 mods
+RUN a2enmod rewrite
 
 # Install supervisor (using easy_install to get latest version and not from 2013 using apt-get)
 RUN mkdir /var/log/supervisor/
@@ -106,4 +101,6 @@ EXPOSE 80
 
 ENTRYPOINT ["/bin/bash"]
 CMD ["/start.sh"]
+
+
 
