@@ -1,5 +1,5 @@
 # Base image
-FROM php:7.0-apache
+FROM php:7.1-apache
 
 RUN echo 'Europe/Warsaw' > /etc/timezone
 RUN a2enmod rewrite
