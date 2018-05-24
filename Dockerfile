@@ -98,6 +98,7 @@ RUN chmod 755 /start.sh
 
 EXPOSE 3306
 EXPOSE 80
+EXPOSE 9000
 
 ENTRYPOINT ["/bin/bash"]
 CMD ["/start.sh"]
