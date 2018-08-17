@@ -38,6 +38,7 @@ RUN docker-php-ext-install -j$(nproc) iconv mcrypt && \
     docker-php-ext-install zip && \
     docker-php-ext-install pdo_mysql && \
     docker-php-ext-install mysqli && \
+    docker-php-ext-install pcntl && \
     docker-php-ext-install mbstring
 
 RUN pecl channel-update pecl.php.net && \
